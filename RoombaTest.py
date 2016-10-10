@@ -234,8 +234,9 @@ write_command("128")
 time.sleep(0.5)
 #write_command("131")
 time.sleep(1)
+clean()
 
-reset()
+#reset()
 
 '''
 
