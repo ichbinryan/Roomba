@@ -9,6 +9,10 @@ BREAK = -256
 MODE = ''
 STATE = 'NULL'
 
+'''
+This version will be changed to incorporate the new socket techniques used in the DHAM SD smart devices.
+'''
+
 #Must return roomba to passive mode.  Battery can wear.
 
 
