@@ -234,25 +234,19 @@ write_command("128")
 time.sleep(0.5)
 #write_command("131")
 time.sleep(1)
-clean()
+#clean()
 
-#reset()
-
-'''
+reset()
 
 
-f.write('resting \n')
-f.write('Charge: \n')
+for i in range(0, 1000, 1):
 
-
-for i in range(0, 10, 1):
-
-    f.write(str(get_current()))
+    #f.write(str(get_current()))
     #f.write('\t')
 
     time.sleep(1)
 
-    #f.write(str(get_charge()))
+    f.write(str(get_charge()))
     f.write('\n')
 
     #time.sleep(1)
@@ -260,4 +254,4 @@ for i in range(0, 10, 1):
 
 
 f.close()
-ser.close()'''
+ser.close()

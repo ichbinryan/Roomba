@@ -7,8 +7,10 @@ PORT = 3141
 IP = ''
 BREAK = -256
 MODE = ''
+STATE = 'NULL'
 
 #Must return roomba to passive mode.  Battery can wear.
+
 
 class Roomba:
     ser = serial.Serial()
@@ -47,6 +49,7 @@ class Roomba:
     def charge(self):
         if MODE != 'P':
             self.passive()
+        STATE = 'charge'
         self.write_command("143")
 
     def sing_song(self):
@@ -81,17 +84,20 @@ class Roomba:
 
     def clean(self):
         self.write_command("135")
+        STATE = 'clean'
 
     def max(self):
         self.write_command("136")
+        STATE = 'max'
 
     def spot(self):
         self.write_command("134")
+        STATE = 'spot'
 
     #roomba will seek dock but not charge
     def seek_dock(self):
         self.write_command("143")
-
+        STATE = 'delay charge'
         #stream charge
         x = -1
         while x < 0:
@@ -252,7 +258,7 @@ class Roomba:
         z = self.convertUnsigned(high, low)
         print 'charge is: '
         print z
-        write_command('150 0')
+        self.write_command('150 0')
         time.sleep(.5)
         return int(z)
 
