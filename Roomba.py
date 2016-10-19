@@ -11,6 +11,7 @@ STATE = 'NULL'
 
 '''
 This version will be changed to incorporate the new socket techniques used in the DHAM SD smart devices.
+Should appear in new branch.
 '''
 
 #Must return roomba to passive mode.  Battery can wear.
