@@ -1,7 +1,8 @@
 import struct
 import serial
 import time
-from socketIO_client import *
+#from socketIO_client import *
+import socket
 
 PORT = 3141
 IP = ''
@@ -19,6 +20,8 @@ Should appear in new branch...
 
 class Roomba:
     ser = serial.Serial()
+
+    #TODO:  add in sockets to communicate with new protocol
 
     def __init__(self, port, baud):
         self.ser.port = port
@@ -52,10 +55,12 @@ class Roomba:
             print("error passing commands")
 
     def charge(self):
+        global STATE
         if MODE != 'P':
             self.passive()
         STATE = 'charge'
         self.write_command("143")
+
 
     def sing_song(self):
         #beep
@@ -65,18 +70,22 @@ class Roomba:
         #self.write_command("140 3 7 54 16 52 16 50 16 52 16 54 16 54 16 54 16 141 3")
 
     def passive(self):
+        global MODE
         MODE = 'P'
         self.write_command('128')
 
     def safe(self):
+        global MODE
         MODE = 'S'
         self.write_command('131')
 
     def full(self):
+        global MODE
         MODE = 'F'
         self.write_command('132')
 
     def stop(self):
+        global MODE
         MODE = ''
         self.write_command('173')
 
@@ -88,19 +97,23 @@ class Roomba:
             time.sleep(1)
 
     def clean(self):
+        global STATE
         self.write_command("135")
         STATE = 'clean'
 
     def max(self):
+        global STATE
         self.write_command("136")
         STATE = 'max'
 
     def spot(self):
+        global STATE
         self.write_command("134")
         STATE = 'spot'
 
     #roomba will seek dock but not charge
     def seek_dock(self):
+        global STATE
         self.write_command("143")
         STATE = 'delay charge'
         #stream charge
@@ -125,7 +138,7 @@ class Roomba:
             self.passive()
 
 
-#TODO: Need to get max battery charge and convert to percentage.
+# TODO: Need to get max battery charge and convert to percentage.
     def get_charge(self):
         self.write_command("148 1 25")
         print "Reading bytes"
@@ -159,7 +172,8 @@ class Roomba:
         print n/6500
         self.write_command('150 0')
         time.sleep(.5)
-        return int(n)
+        n=int(n)
+        return n
 
     #Current returns 2 signed byte
     def get_current(self):
@@ -200,7 +214,7 @@ class Roomba:
 
         print 'current is: '
         print n #contains final converted value as an 64 bit signed int.
-        write_command('150 0')
+        self.write_command('150 0')
         time.sleep(.5)
         return int(n)
 
@@ -232,7 +246,7 @@ class Roomba:
         print z  #contains final converted value as an 64 bit signed int.
         #end stream?  or convert to regular
         print "Exiting Stream"
-        write_command('150 0')
+        self.write_command('150 0')
         time.sleep(.5)
         return int(z)
 
@@ -310,19 +324,50 @@ class Roomba:
             return None
 
 
-#roomba = Roomba("R1", "/dev/tty.usbserial-DA01NUHC", 115200)
 
-roomba = Roomba("/dev/ttyUSB0", 115200)
-#roomba.sing_song()
-try:
-    socketIO = SocketIO("192.168.1.137", 3141)
-except:
-    print 'issue connecting to server'
+
+
+'''
+END ROOMBA CLASS
+Consider modularizing from here.  Create socket objects in separate script
+and import into here.  Starting to get a little cramped in here...
+'''
+def connectSocket():
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        return 1
+    except:
+        print 'error creating sockets'
+        return 0
+
+
+sock.connect(('127.0.0.1', 3141))
+datasock = sock.connect(('127.0.0.1', 4444))
+
+def readCommand():
+    sock = sock.recv(1024)
+    print sock
+
+    if sock == "clean":
+        clean()
+        datasock.send("clean")
+    elif sock == "max":
+        max()
+        sock.send("max")
+    elif sock == "charge":
+        charge()
+        datasock.send("charge")
+    elif sock == "seek_dock":
+        seek_dock()
+        datasock.send("seek dock")
+    else datasock.send("NACK")
+
 
 #TODO: send back integer values where necessary
 def clean(*args): #
     roomba.clean()
-
+s
 def charge(*args): #
     roomba.charge()
 
@@ -358,7 +403,8 @@ def battery_charge(*args): #
     x = roomba.get_charge()
     #need to emit x
     x = str(x)
-    socketIO.emit(x)
+    #socketIO.emit(x)
+    socket.send(x)
 
 
 def battery_capacity(*args):
@@ -368,13 +414,45 @@ def voltage(*args):
     x = roomba.get_voltage()
     x = str(x)
     #socketIO.emit(x)
-    socketIO.send(x)
+    socket.send(x)
+    #TODO: make sure network endianness does not flip bits when sent over socket
 
 def seek_dock(*args):
     roomba.seek_dock()
 
+#roomba = Roomba("R1", "/dev/tty.usbserial-DA01NUHC", 115200)
+
+'''
+Begin "main"
+Declare roomba
+create socket instances
+begin listening to instructions
+'''
+
+roomba = Roomba("/dev/ttyUSB0", 115200)
+#roomba.sing_song()
+sock = socket()
+datasock=socket()
+x=connectSocket()
+
+while x!=1:
+    connectSocket()
+
+while 1:
+    readCommand()
 
 
+
+'''
+
+try:
+    socketIO = SocketIO("192.168.1.137", 3141)
+    #socketIO = SocketIO("127.0.0.1", 4444)
+except:
+    print 'issue connecting to server'
+Uncomment out to use socket IO instead of direct socket connection
+
+Socket IO goes through the node js server setup in DHam project
 while True:
     socketIO.once('clean', clean)
     socketIO.wait(seconds=1)
@@ -413,4 +491,4 @@ while True:
     socketIO.wait(seconds=1)
 
     socketIO.once('voltage', voltage)
-    socketIO.wait(seconds=1)
+    socketIO.wait(seconds=1)'''
