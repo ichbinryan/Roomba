@@ -1,14 +1,24 @@
 import struct
 import serial
 import time
-#from socketIO_client import *
+from socketIO_client import *
 import socket
+from io import *
 
 PORT = 3141
 IP = ''
 BREAK = -256
 MODE = ''
 STATE = 'NULL'
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+sock.setblocking(1)
+
+
+sock.connect(('192.168.1.137', 3141))
+datasock.connect(('192.168.1.137', 4444))
 
 '''
 This version will be changed to incorporate the new socket techniques used in the DHAM SD smart devices.
@@ -37,11 +47,11 @@ class Roomba:
 
         self.passive()
         time.sleep(0.5)
-        #self.safe()  #initialize roomba to safe mode
+        self.safe()  #initialize roomba to safe mode
         #self.full()
 
         time.sleep(0.5)
-        self.sing_song()
+        #self.sing_song()
 
     def write_command(self, command):
         cmd = ""
@@ -327,47 +337,14 @@ class Roomba:
 
 
 
-'''
-END ROOMBA CLASS
-Consider modularizing from here.  Create socket objects in separate script
-and import into here.  Starting to get a little cramped in here...
-'''
-def connectSocket():
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        return 1
-    except:
-        print 'error creating sockets'
-        return 0
 
 
-sock.connect(('127.0.0.1', 3141))
-datasock = sock.connect(('127.0.0.1', 4444))
-
-def readCommand():
-    sock = sock.recv(1024)
-    print sock
-
-    if sock == "clean":
-        clean()
-        datasock.send("clean")
-    elif sock == "max":
-        max()
-        sock.send("max")
-    elif sock == "charge":
-        charge()
-        datasock.send("charge")
-    elif sock == "seek_dock":
-        seek_dock()
-        datasock.send("seek dock")
-    else datasock.send("NACK")
 
 
 #TODO: send back integer values where necessary
 def clean(*args): #
     roomba.clean()
-s
+
 def charge(*args): #
     roomba.charge()
 
@@ -420,6 +397,28 @@ def voltage(*args):
 def seek_dock(*args):
     roomba.seek_dock()
 
+
+def readCommand(cmd):
+    print "entered read command"
+
+    # cmd_decoded = cmd.decode("utf-8")
+    # TODO: NEED TO CHECK FOR SOCKET DISCONNECT
+    print cmd
+
+    if cmd == "clean":
+        clean()
+        print 'Sending ack'
+        datasock.send("clean".encode())
+    if cmd == "max":
+        max()
+        datasock.send("max".encode())
+    if cmd == "charge\n":
+        charge()
+        datasock.send("charge".encode())
+    if cmd == "seek_dock":
+        seek_dock()
+        datasock.send("seek dock\n".encode())
+
 #roomba = Roomba("R1", "/dev/tty.usbserial-DA01NUHC", 115200)
 
 '''
@@ -430,16 +429,15 @@ begin listening to instructions
 '''
 
 roomba = Roomba("/dev/ttyUSB0", 115200)
-#roomba.sing_song()
-sock = socket()
-datasock=socket()
-x=connectSocket()
+roomba.sing_song()
 
-while x!=1:
-    connectSocket()
+
 
 while 1:
-    readCommand()
+    cmd = ''
+    cmd = sock.recv(5)
+    print cmd
+    readCommand(cmd)
 
 
 
@@ -450,6 +448,7 @@ try:
     #socketIO = SocketIO("127.0.0.1", 4444)
 except:
     print 'issue connecting to server'
+
 Uncomment out to use socket IO instead of direct socket connection
 
 Socket IO goes through the node js server setup in DHam project
