@@ -31,8 +31,6 @@ Should appear in new branch...
 class Roomba:
     ser = serial.Serial()
 
-    #TODO:  add in sockets to communicate with new protocol
-
     def __init__(self, port, baud):
         self.ser.port = port
         self.ser.baudrate = baud
@@ -342,6 +340,11 @@ class Roomba:
 
 
 #TODO: send back integer values where necessary
+def get_state():
+    state = STATE + '\n'
+    datasock.send(state.encode())
+    return STATE
+
 def clean(*args): #
     roomba.clean()
 
@@ -374,8 +377,6 @@ def spot(*args): #
 def max(*args): #
     roomba.write_command('136')
 
-
-#TODO:  Still need to incorporate percentage charge rather tha n whole charge
 def battery_charge(*args): #
     x = roomba.get_charge()
     #need to emit x
@@ -392,32 +393,44 @@ def voltage(*args):
     x = str(x)
     #socketIO.emit(x)
     socket.send(x)
-    #TODO: make sure network endianness does not flip bits when sent over socket
 
 def seek_dock(*args):
     roomba.seek_dock()
+
+def end_connection():
+    datasock.close()
+    sock.close()
+    print "connection ceased\n"
 
 
 def readCommand(cmd):
     print "entered read command"
 
     # cmd_decoded = cmd.decode("utf-8")
-    # TODO: NEED TO CHECK FOR SOCKET DISCONNECT
     print cmd
 
     if cmd == "clean":
         clean()
         print 'Sending ack'
-        datasock.send("clean".encode())
-    if cmd == "max":
+        datasock.send("clean\n".encode())
+    elif cmd == "max":
         max()
-        datasock.send("max".encode())
-    if cmd == "charge\n":
+        datasock.send("max\n".encode())
+    elif cmd == "charge":
         charge()
-        datasock.send("charge".encode())
-    if cmd == "seek_dock":
+        datasock.send("charge\n".encode())
+    elif cmd == 'get_charge':
+        #returns current battery charge in a percentage
+        #write is done in get_charge function.
+        battery_charge()
+    elif cmd == "seek_dock":
         seek_dock()
         datasock.send("seek dock\n".encode())
+    elif cmd == "state":
+        get_state()
+    elif cmd == 'kill':
+        end_connection()
+
 
 #roomba = Roomba("R1", "/dev/tty.usbserial-DA01NUHC", 115200)
 
@@ -430,8 +443,6 @@ begin listening to instructions
 
 roomba = Roomba("/dev/ttyUSB0", 115200)
 roomba.sing_song()
-
-
 
 while 1:
     cmd = ''
