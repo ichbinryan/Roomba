@@ -341,8 +341,10 @@ class Roomba:
 
 #TODO: send back integer values where necessary
 def get_state():
+    print "sending state"
     state = STATE + '\n'
-    datasock.send(state.encode())
+    print "State:"+STATE
+    datasock.send(state)
     return STATE
 
 def clean(*args): #
