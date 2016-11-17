@@ -16,8 +16,9 @@ datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setblocking(1)
 
 
-sock.connect(('192.168.1.137', 3141))
-datasock.connect(('192.168.1.137', 4444))
+#sock.connect(('192.168.1.137', 3141))
+sock.connect(('127.0.0.1', 3141))
+#datasock.connect(('192.168.1.137', 4444))
 
 '''
 This version will be changed to incorporate the new socket techniques used in the DHAM SD smart devices.
@@ -63,10 +64,17 @@ class Roomba:
 
     def charge(self):
         global STATE
-        if MODE != 'P':
-            self.passive()
         STATE = 'charge'
         self.write_command("143")
+        if MODE != 'P':
+            self.passive()
+        #wait and signal when the roomba reaches the dock successfully
+        while x < 0:
+            x = self.get_current()
+            print 'waiting'
+            time.sleep(.5)
+
+
 
 
     def sing_song(self):
@@ -336,16 +344,22 @@ class Roomba:
 
 #TODO: send back integer values where necessary
 def get_state():
+    global STATE
     print "sending state"
+    state = ''
     state = STATE + '\n'
     print "State:"+STATE
     sock.send(state)
     return STATE
 
 def clean(*args): #
+    global STATE
+    STATE = 'clean'
     roomba.clean()
 
 def charge(*args): #
+    global STATE
+    STATE = 'charge'
     roomba.charge()
 
 def sing(*args): #
@@ -369,12 +383,17 @@ def reset(*args): #
     safe()
 
 def spot(*args): #
+    print 'spot activated'
     roomba.write_command('134')
 
 def max(*args): #
+    global STATE
+    STATE = 'max'
+    print 'max activated'
     roomba.write_command('136')
 
 def battery_charge(*args): #
+    print 'charge activated'
     x = roomba.get_charge()
     #need to emit x
     x = str(x)
@@ -392,6 +411,7 @@ def voltage(*args):
     socket.send(x)
 
 def seek_dock(*args):
+    print 'seek dock activated'
     roomba.seek_dock()
 
 def end_connection():
@@ -409,20 +429,20 @@ def readCommand(cmd):
     if cmd == "clean":
         clean()
         print 'Sending ack'
-        datasock.send("clean\n")
+        sock.send("clean\n")
     elif cmd == "max":
         max()
-        datasock.send("max\n")
+        sock.send("max\n")
     elif cmd == "charge":
         charge()
-        datasock.send("charge\n")
+        sock.send("charge\n")#TODO: Need to send ack back AFTER the roomba reaches dock
     elif cmd == 'get_charge':
         #returns current battery charge in a percentage
         #write is done in get_charge function.
         battery_charge()
     elif cmd == "seek_dock":
         seek_dock()
-        datasock.send("seek dock\n")
+        sock.send("seek dock\n")#TODO: Need to send ack back after roomba reaches dock
     elif cmd == "state":
         get_state()
     elif cmd == 'kill':
@@ -443,7 +463,8 @@ roomba.sing_song()
 
 while 1:
     cmd = ''
-    cmd = sock.recv(5)
+
+    cmd = sock.recv(56)
     print cmd
     readCommand(cmd)
 
