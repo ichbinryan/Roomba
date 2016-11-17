@@ -1,7 +1,6 @@
 import struct
 import serial
 import time
-from socketIO_client import *
 import socket
 from io import *
 
@@ -335,16 +334,12 @@ class Roomba:
 
 
 
-
-
-
-
 #TODO: send back integer values where necessary
 def get_state():
     print "sending state"
     state = STATE + '\n'
     print "State:"+STATE
-    datasock.send(state)
+    sock.send(state)
     return STATE
 
 def clean(*args): #
@@ -414,20 +409,20 @@ def readCommand(cmd):
     if cmd == "clean":
         clean()
         print 'Sending ack'
-        datasock.send("clean\n".encode())
+        datasock.send("clean\n")
     elif cmd == "max":
         max()
-        datasock.send("max\n".encode())
+        datasock.send("max\n")
     elif cmd == "charge":
         charge()
-        datasock.send("charge\n".encode())
+        datasock.send("charge\n")
     elif cmd == 'get_charge':
         #returns current battery charge in a percentage
         #write is done in get_charge function.
         battery_charge()
     elif cmd == "seek_dock":
         seek_dock()
-        datasock.send("seek dock\n".encode())
+        datasock.send("seek dock\n")
     elif cmd == "state":
         get_state()
     elif cmd == 'kill':
