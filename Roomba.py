@@ -16,8 +16,8 @@ datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setblocking(1)
 
 
-#sock.connect(('192.168.1.137', 3141))
-sock.connect(('127.0.0.1', 3141))
+sock.connect(('192.168.1.137', 3141))
+#sock.connect(('127.0.0.1', 3141))
 #datasock.connect(('192.168.1.137', 4444))
 
 '''
@@ -75,8 +75,6 @@ class Roomba:
             time.sleep(.5)
 
 
-
-
     def sing_song(self):
         #beep
         self.write_command("140 3 1 64 16 141 3")
@@ -112,6 +110,7 @@ class Roomba:
             time.sleep(1)
 
     def clean(self):
+
         global STATE
         self.write_command("135")
         STATE = 'clean'
@@ -128,6 +127,7 @@ class Roomba:
 
     #roomba will seek dock but not charge
     def seek_dock(self):
+        self.safe()
         global STATE
         self.write_command("143")
         STATE = 'delay charge'
@@ -138,15 +138,15 @@ class Roomba:
             print 'waiting'
             time.sleep(.5)
 
-        time.sleep(3)
+        time.sleep(2)#test variable back off times, or figure out how to do distance?
 
         #back roomba off dock
-        if MODE == 'P':
-            self.safe()
-            time.sleep(.5)
+
+        self.safe()
+        time.sleep(.5)
 
         self.write_command('145 255 56 255 56')
-        time.sleep(.5)
+        time.sleep(2)
         self.write_command('145 0 0 0 0')
 
         if MODE == 'S':
@@ -184,7 +184,7 @@ class Roomba:
         print 'charge is: '
         print n
         print 'perctage of charge remaining:  '
-        print n/6500
+        print float(n/2500)
         self.write_command('150 0')
         time.sleep(.5)
         n=int(n)
@@ -395,10 +395,14 @@ def max(*args): #
 def battery_charge(*args): #
     print 'charge activated'
     x = roomba.get_charge()
+    print 'x is: '
+    print x
     #need to emit x
-    x = str(x)
+    y = str(x)
+    y = y+'\n'
+    print ' y is' + y
     #socketIO.emit(x)
-    socket.send(x)
+    sock.send(y)
 
 
 def battery_capacity(*args):
@@ -408,11 +412,12 @@ def voltage(*args):
     x = roomba.get_voltage()
     x = str(x)
     #socketIO.emit(x)
-    socket.send(x)
+    sock.send(x)
 
 def seek_dock(*args):
     print 'seek dock activated'
     roomba.seek_dock()
+    sock.send("delay charge\n")
 
 def end_connection():
     datasock.close()
@@ -422,6 +427,13 @@ def end_connection():
 
 def readCommand(cmd):
     print "entered read command"
+    global STATE
+    temp_state = STATE
+
+    exit()
+    safe()
+
+    time.sleep(2)
 
     # cmd_decoded = cmd.decode("utf-8")
     print cmd
