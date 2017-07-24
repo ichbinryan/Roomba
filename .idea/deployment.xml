@@ -5,7 +5,7 @@
       <paths name="Pi3">
         <serverdata>
           <mappings>
-            <mapping deploy="/Roomba3_0" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/RoombaCode" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
