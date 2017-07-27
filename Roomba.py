@@ -10,13 +10,9 @@ BREAK = -256
 MODE = ''
 STATE = 'NULL'
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-sock.setblocking(1)
 
 
-sock.connect(('192.168.1.137', 3141))
+#sock.connect(('192.168.1.137', 3141))
 #sock.connect(('127.0.0.1', 3141))
 #datasock.connect(('192.168.1.137', 4444))
 
@@ -77,10 +73,10 @@ class Roomba:
 
     def sing_song(self):
         #beep
-        self.write_command("140 3 1 64 16 141 3")
+        #self.write_command("140 3 1 64 16 141 3")
 
         #Mary had a little lamb
-        #self.write_command("140 3 7 54 16 52 16 50 16 52 16 54 16 54 16 54 16 141 3")
+        self.write_command("140 3 7 54 16 52 16 50 16 52 16 54 16 54 16 54 16 141 3")
 
     def passive(self):
         global MODE
@@ -469,6 +465,16 @@ Declare roomba
 create socket instances
 begin listening to instructions
 '''
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#datasock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+#sock.setblocking(1)
+#sock.bind(('192.168.1.123', 3141))
+sock.bind(('127.0.0.1', 3141))
+
+
+sock.listen(5)
+(clientsocket, address) = sock.accept()
 
 roomba = Roomba("/dev/ttyUSB0", 115200)
 roomba.sing_song()
@@ -476,7 +482,11 @@ roomba.sing_song()
 while 1:
     cmd = ''
 
-    cmd = sock.recv(56)
+    cmd = clientsocket.recv(56)
+    if cmd == 'exit':
+        clientsocket.close()
+        sock.close()
+        exit(0)
     print cmd
     readCommand(cmd)
 
