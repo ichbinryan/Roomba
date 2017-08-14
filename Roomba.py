@@ -10,8 +10,6 @@ BREAK = -256
 MODE = ''
 STATE = 'NULL'
 
-
-
 #sock.connect(('192.168.1.137', 3141))
 #sock.connect(('127.0.0.1', 3141))
 #datasock.connect(('192.168.1.137', 4444))
@@ -22,7 +20,6 @@ Should appear in new branch...
 '''
 
 #Must return roomba to passive mode.  Battery can wear.
-
 
 class Roomba:
     ser = serial.Serial()
